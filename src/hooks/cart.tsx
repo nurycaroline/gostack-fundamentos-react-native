@@ -30,23 +30,69 @@ const CartProvider: React.FC = ({ children }) => {
 
   useEffect(() => {
     async function loadProducts(): Promise<void> {
-      // TODO LOAD ITEMS FROM ASYNC STORAGE
+      const productsStorage = await AsyncStorage.getItem('@GoBarber-cart');
+      if (productsStorage) {
+        setProducts(JSON.parse(productsStorage));
+      }
     }
 
     loadProducts();
   }, []);
 
-  const addToCart = useCallback(async product => {
-    // TODO ADD A NEW ITEM TO THE CART
-  }, []);
+  const addToCart = useCallback(
+    async product => {
+      const newProducts = [...products];
 
-  const increment = useCallback(async id => {
-    // TODO INCREMENTS A PRODUCT QUANTITY IN THE CART
-  }, []);
+      const productIndex = newProducts.findIndex(
+        (item: Product) => item.id === product.id,
+      );
 
-  const decrement = useCallback(async id => {
-    // TODO DECREMENTS A PRODUCT QUANTITY IN THE CART
-  }, []);
+      if (productIndex >= 0) {
+        newProducts[productIndex].quantity += 1;
+      } else {
+        newProducts.push({
+          ...product,
+          quantity: 1,
+        });
+      }
+
+      setProducts(newProducts);
+      AsyncStorage.setItem('@GoBarber-cart', JSON.stringify(newProducts));
+    },
+    [products],
+  );
+
+  const increment = useCallback(
+    async id => {
+      const newProducts = [...products];
+      const productIndex = newProducts.findIndex(p => p.id === id);
+
+      if (productIndex >= 0) {
+        newProducts[productIndex].quantity += 1;
+      }
+
+      setProducts(newProducts);
+      AsyncStorage.setItem('@GoBarber-cart', JSON.stringify(newProducts));
+    },
+    [products],
+  );
+
+  const decrement = useCallback(
+    async id => {
+      let newProducts = [...products];
+      const productIndex = newProducts.findIndex(p => p.id === id);
+
+      if (productIndex >= 0 && newProducts[productIndex].quantity - 1 > 0) {
+        newProducts[productIndex].quantity -= 1;
+      } else {
+        newProducts = newProducts.filter(p => p.id !== id);
+      }
+
+      setProducts(newProducts);
+      AsyncStorage.setItem('@GoBarber-cart', JSON.stringify(newProducts));
+    },
+    [products],
+  );
 
   const value = React.useMemo(
     () => ({ addToCart, increment, decrement, products }),
